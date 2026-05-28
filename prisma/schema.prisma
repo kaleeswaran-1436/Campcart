@@ -8,9 +8,201 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ==========================================
-// ENUMS
-// ==========================================
+model User {
+  id                   String                    @id @db.Uuid
+  role                 UserRole                  @default(USER)
+  name                 String
+  email                String                    @unique
+  avatar               String?
+  isVerified           Boolean                   @default(false)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  deletedAt            DateTime?
+  buyerConversations   Conversation[]            @relation("BuyerConversations")
+  sellerConversations  Conversation[]            @relation("SellerConversations")
+  participants         ConversationParticipant[]
+  listings             Listing[]                 @relation("SellerListings")
+  transactionsAsBuyer  ListingTransaction[]      @relation("TransactionBuyer")
+  transactionsAsSeller ListingTransaction[]      @relation("TransactionSeller")
+  messages             Message[]
+
+  @@index([createdAt])
+}
+
+model Listing {
+  id            String               @id @default(uuid()) @db.Uuid
+  slug          String               @unique
+  title         String
+  description   String
+  price         Float
+  originalPrice Float?
+  category      String
+  condition     String
+  status        ListingStatus        @default(ACTIVE)
+  imageUrl      String?
+  imageUrls     String[]             @default([])
+  negotiable    Boolean              @default(false)
+  tags          String[]             @default([])
+  department    String?
+  sellerId      String               @db.Uuid
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deletedAt     DateTime?
+  conversations Conversation[]
+  seller        User                 @relation("SellerListings", fields: [sellerId], references: [id], onDelete: Cascade)
+  transactions  ListingTransaction[]
+  reservations  Reservation[]
+
+  @@index([status])
+  @@index([category])
+  @@index([sellerId])
+  @@index([createdAt])
+  @@index([slug])
+}
+
+model Conversation {
+  id                String                    @id @default(uuid()) @db.Uuid
+  listingId         String                    @db.Uuid
+  buyerId           String                    @db.Uuid
+  sellerId          String                    @db.Uuid
+  conversationStage ConversationStage         @default(NEGOTIATING)
+  lastActivityAt    DateTime                  @default(now())
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  deletedAt         DateTime?
+  archivedAt        DateTime?
+  lastMessageId     String?
+  buyer             User                      @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  listing           Listing                   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  seller            User                      @relation("SellerConversations", fields: [sellerId], references: [id], onDelete: Cascade)
+  participants      ConversationParticipant[]
+  meetupLocations   MeetupLocation[]
+  messages          Message[]
+  reservations      Reservation[]
+
+  @@index([createdAt])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  userId         String       @db.Uuid
+  role           String
+  unreadCount    Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  archivedAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([createdAt])
+}
+
+model Message {
+  id              String        @id @default(uuid()) @db.Uuid
+  serverMessageId String        @unique @default(uuid()) @db.Uuid
+  clientTempId    String?
+  conversationId  String        @db.Uuid
+  senderId        String        @db.Uuid
+  messageType     MessageType   @default(TEXT)
+  messageStatus   MessageStatus @default(SENT)
+  content         String?
+  attachmentUrl   String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model MeetupLocation {
+  id                String       @id @default(uuid()) @db.Uuid
+  conversationId    String       @db.Uuid
+  title             String
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  meetupTime        DateTime?
+  confirmedByBuyer  Boolean      @default(false)
+  confirmedBySeller Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model Reservation {
+  id             String               @id @default(uuid()) @db.Uuid
+  conversationId String               @db.Uuid
+  listingId      String               @db.Uuid
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  deletedAt      DateTime?
+  transactions   ListingTransaction[]
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  listing        Listing              @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model ListingTransaction {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  listingId            String                  @db.Uuid
+  reservationId        String?                 @db.Uuid
+  buyerId              String                  @db.Uuid
+  sellerId             String                  @db.Uuid
+  status               TransactionStatus       @default(PENDING)
+  completedAt          DateTime?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  deletedAt            DateTime?
+  exchangeConfirmation ExchangeConfirmation?
+  buyer                User                    @relation("TransactionBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  listing              Listing                 @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reservation          Reservation?            @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seller               User                    @relation("TransactionSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  qrSessions           QRVerificationSession[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QRVerificationSession {
+  id            String             @id @default(uuid()) @db.Uuid
+  transactionId String             @db.Uuid
+  sellerId      String             @db.Uuid
+  buyerId       String             @db.Uuid
+  nonce         String             @unique @default(uuid()) @db.Uuid
+  signedToken   String
+  status        QRSessionStatus    @default(ACTIVE)
+  expiresAt     DateTime
+  scannedAt     DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+  transaction   ListingTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model ExchangeConfirmation {
+  id                String             @id @default(uuid()) @db.Uuid
+  transactionId     String             @unique @db.Uuid
+  confirmedByBuyer  DateTime?
+  confirmedBySeller DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  transaction       ListingTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
 
 enum UserRole {
   USER
@@ -65,253 +257,4 @@ enum TransactionStatus {
   EXCHANGE_CONFIRMED
   COMPLETED
   CANCELLED
-}
-
-// ==========================================
-// MODELS
-// ==========================================
-
-model User {
-  id         String   @id @db.Uuid
-  role       UserRole @default(USER)
-  name       String
-  email      String   @unique
-  avatar     String?
-  isVerified Boolean  @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  listings Listing[] @relation("SellerListings")
-
-  buyerConversations  Conversation[] @relation("BuyerConversations")
-  sellerConversations Conversation[] @relation("SellerConversations")
-
-  participants         ConversationParticipant[]
-  messages             Message[]
-  transactionsAsBuyer  ListingTransaction[]      @relation("TransactionBuyer")
-  transactionsAsSeller ListingTransaction[]      @relation("TransactionSeller")
-
-  @@index([createdAt])
-}
-
-model Listing {
-  id            String        @id @default(uuid()) @db.Uuid
-  slug          String        @unique
-  title         String
-  description   String
-  price         Float
-  originalPrice Float?
-  category      String
-  condition     String
-  status        ListingStatus @default(ACTIVE)
-  
-  // Image handling - support multiple images
-  imageUrl      String?       // Primary image URL (for backward compatibility)
-  imageUrls     String[]      @default([]) // Array of all image URLs
-  
-  // Additional listing metadata
-  negotiable    Boolean       @default(false)
-  tags          String[]      @default([])
-  department    String?
-
-  sellerId String @db.Uuid
-  seller   User   @relation("SellerListings", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  conversations Conversation[]
-  reservations  Reservation[]
-  transactions  ListingTransaction[]
-
-  @@index([status])
-  @@index([category])
-  @@index([sellerId])
-  @@index([createdAt])
-  @@index([slug])
-}
-
-model Conversation {
-  id        String  @id @default(uuid()) @db.Uuid
-  listingId String  @db.Uuid
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  buyerId String @db.Uuid
-  buyer   User   @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
-
-  sellerId String @db.Uuid
-  seller   User   @relation("SellerConversations", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  conversationStage ConversationStage @default(NEGOTIATING)
-
-  lastActivityAt DateTime @default(now())
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
-  archivedAt DateTime?
-
-  lastMessageId String?
-
-  participants    ConversationParticipant[]
-  messages        Message[]
-  meetupLocations MeetupLocation[]
-  reservations    Reservation[]
-
-  @@index([createdAt])
-}
-
-model ConversationParticipant {
-  id             String       @id @default(uuid()) @db.Uuid
-  conversationId String       @db.Uuid
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  userId String @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  role        String // "BUYER" | "SELLER"
-  unreadCount Int    @default(0)
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
-  archivedAt DateTime?
-
-  @@unique([conversationId, userId])
-  @@index([createdAt])
-}
-
-model Message {
-  id String @id @default(uuid()) @db.Uuid
-
-  serverMessageId String  @unique @default(uuid()) @db.Uuid
-  clientTempId    String?
-
-  conversationId String       @db.Uuid
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId String @db.Uuid
-  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  messageType   MessageType   @default(TEXT)
-  messageStatus MessageStatus @default(SENT)
-
-  content       String?
-  attachmentUrl String?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([createdAt])
-}
-
-model MeetupLocation {
-  id             String       @id @default(uuid()) @db.Uuid
-  conversationId String       @db.Uuid
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  title      String
-  address    String?
-  latitude   Float?
-  longitude  Float?
-  meetupTime DateTime?
-
-  confirmedByBuyer  Boolean @default(false)
-  confirmedBySeller Boolean @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([createdAt])
-}
-
-model Reservation {
-  id             String       @id @default(uuid()) @db.Uuid
-  conversationId String       @db.Uuid
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  listingId String  @db.Uuid
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  transactions ListingTransaction[]
-
-  @@index([createdAt])
-}
-
-model ListingTransaction {
-  id String @id @default(uuid()) @db.Uuid
-
-  listingId String  @db.Uuid
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  reservationId String?      @db.Uuid
-  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-
-  buyerId String @db.Uuid
-  buyer   User   @relation("TransactionBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-
-  sellerId String @db.Uuid
-  seller   User   @relation("TransactionSeller", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  status      TransactionStatus @default(PENDING)
-  completedAt DateTime?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  qrSessions           QRVerificationSession[]
-  exchangeConfirmation ExchangeConfirmation?
-
-  @@index([status])
-  @@index([createdAt])
-}
-
-model QRVerificationSession {
-  id String @id @default(uuid()) @db.Uuid
-
-  transactionId String             @db.Uuid
-  transaction   ListingTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  sellerId String @db.Uuid
-  buyerId  String @db.Uuid
-
-  nonce       String @unique @default(uuid()) @db.Uuid
-  signedToken String
-
-  status QRSessionStatus @default(ACTIVE)
-
-  expiresAt DateTime
-  scannedAt DateTime?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([createdAt])
-}
-
-model ExchangeConfirmation {
-  id String @id @default(uuid()) @db.Uuid
-
-  transactionId String             @unique @db.Uuid
-  transaction   ListingTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  confirmedByBuyer  DateTime?
-  confirmedBySeller DateTime?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([createdAt])
 }

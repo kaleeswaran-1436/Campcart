@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 /* ── Fonts ──────────────────────────────────────────────── */
 const inter = Inter({
@@ -57,13 +59,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2E3436",
+  themeColor: "#1B1F23",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
 };
-
-import { AuthProvider } from "@/components/providers/AuthProvider";
 
 /* ── Root Layout ─────────────────────────────────────────── */
 export default function RootLayout({
@@ -75,11 +75,13 @@ export default function RootLayout({
       className={`${inter.variable} ${geistMono.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-        <AuthProvider>
-          {children}
-          <ToastProvider />
-        </AuthProvider>
+      <body className="min-h-full flex flex-col bg-[var(--cc-bg)] text-[var(--cc-text-primary)] transition-colors duration-300">
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <ToastProvider />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

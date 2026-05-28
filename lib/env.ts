@@ -45,6 +45,8 @@ const clientEnvSchema = z.object({
 });
 
 function validateEnv() {
+  let serverData;
+  
   // Server env — only validated on server
   if (typeof window === "undefined") {
     const serverResult = serverEnvSchema.safeParse(process.env);
@@ -55,10 +57,18 @@ function validateEnv() {
       if (process.env["NODE_ENV"] === "production") {
         throw new Error("Invalid server environment variables — check your .env");
       }
+      serverData = process.env as unknown as z.infer<typeof serverEnvSchema>;
+    } else {
+      serverData = serverResult.data;
     }
+  } else {
+    // Dummy server data for client bundle
+    serverData = {
+      NODE_ENV: process.env.NODE_ENV,
+    } as unknown as z.infer<typeof serverEnvSchema>;
   }
 
-  const clientResult = clientEnvSchema.safeParse({
+  const clientData = {
     NEXT_PUBLIC_APP_URL:               process.env["NEXT_PUBLIC_APP_URL"],
     NEXT_PUBLIC_APP_NAME:              process.env["NEXT_PUBLIC_APP_NAME"],
     NEXT_PUBLIC_API_URL:               process.env["NEXT_PUBLIC_API_URL"],
@@ -66,15 +76,17 @@ function validateEnv() {
     NEXT_PUBLIC_SUPABASE_ANON_KEY:     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"],
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env["NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"],
     NEXT_PUBLIC_SOCKET_URL:            process.env["NEXT_PUBLIC_SOCKET_URL"],
-  });
+  };
+
+  const clientResult = clientEnvSchema.safeParse(clientData);
 
   if (!clientResult.success) {
-    console.warn("⚠️  Some client env vars are missing — using defaults.");
+    console.warn("⚠️  Some client env vars are missing or invalid:", clientResult.error.format());
   }
 
   return {
-    server: serverEnvSchema.parse(process.env),
-    client: clientResult.data ?? clientEnvSchema.parse({}),
+    server: serverData,
+    client: clientResult.success ? clientResult.data : (clientData as unknown as z.infer<typeof clientEnvSchema>),
   };
 }
 

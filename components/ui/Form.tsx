@@ -53,14 +53,22 @@ export function FormField<
 
 function useFormField() {
   const { name } = useContext(FormFieldContext);
-  const {
-    formState: { errors },
-    getFieldState,
-  } = useFormContext();
 
-  const fieldState = getFieldState(name);
-  const error = errors[name];
+  // Guard: if called outside a FormProvider (e.g. in error boundary), return safe defaults
+  let errors: Record<string, unknown> = {};
+  let fieldState = { invalid: false, isDirty: false, isTouched: false };
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const ctx = useFormContext();
+    if (ctx) {
+      errors = ctx.formState.errors as Record<string, unknown>;
+      fieldState = ctx.getFieldState(name as never) as typeof fieldState;
+    }
+  } catch {
+    // Outside FormProvider — gracefully degrade
+  }
 
+  const error = errors[name] as { message?: string } | undefined;
   return { name, error, fieldState };
 }
 

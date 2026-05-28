@@ -2,21 +2,14 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { APP_ROUTES } from "@/constants/routes";
 
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
 }
 
-/**
- * Global error boundary — shown when an unhandled error occurs in the app.
- * Must be a Client Component per Next.js requirements.
- */
 export default function GlobalError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log to monitoring (e.g. Sentry) in production
     console.error("[CampCart Error Boundary]", error);
   }, [error]);
 
@@ -24,49 +17,43 @@ export default function GlobalError({ error, reset }: ErrorProps) {
     <div className="min-h-screen flex items-center justify-center bg-[var(--cc-bg)] p-4">
       <div className="max-w-md w-full text-center">
         {/* Icon */}
-        <div className="flex justify-center mb-6">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--cc-error-subtle)] text-[var(--cc-error)]">
-            <AlertTriangle className="h-8 w-8" />
-          </span>
+        <div className="relative inline-block mb-8">
+          <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-200 dark:border-red-900/40 flex items-center justify-center mx-auto animate-pulse-soft">
+            <AlertTriangle className="h-12 w-12 text-red-500" />
+          </div>
         </div>
 
-        {/* Copy */}
-        <h1 className="text-2xl font-bold text-[var(--cc-text-primary)] mb-2">
+        <h1 className="text-2xl font-black text-[var(--cc-text-primary)] mb-3">
           Something went wrong
         </h1>
         <p className="text-sm text-[var(--cc-text-secondary)] mb-6 leading-relaxed">
           We hit an unexpected error. This has been logged and we'll look into it.
-          <br />
           Try refreshing, or head back home.
         </p>
 
-        {/* Error digest (for support reference) */}
+        {/* Error digest */}
         {error.digest && (
-          <p className="text-xs font-mono text-[var(--cc-text-disabled)] mb-6 bg-[var(--cc-bg-muted)] px-3 py-2 rounded-lg">
-            Error ID: {error.digest}
-          </p>
+          <div className="mb-6 px-4 py-3 rounded-xl bg-[var(--cc-bg-muted)] border border-[var(--cc-border-subtle)]">
+            <p className="text-xs text-[var(--cc-text-disabled)] font-mono">Error ID: {error.digest}</p>
+          </div>
         )}
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            variant="primary"
-            size="md"
+          <button
             onClick={reset}
-            className="gap-2"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4A64F] to-[#C8943C] text-white font-semibold text-sm hover:from-[#E5B95C] hover:to-[#D4A64F] transition-all duration-200"
           >
             <RefreshCw className="h-4 w-4" />
             Try Again
-          </Button>
-          <Button
-            href={APP_ROUTES.home}
-            variant="outline"
-            size="md"
-            className="gap-2"
+          </button>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--cc-border)] text-[var(--cc-text-secondary)] font-semibold text-sm hover:bg-[var(--cc-bg-muted)] hover:text-[var(--cc-text-primary)] transition-all duration-150"
           >
             <ArrowLeft className="h-4 w-4" />
             Go Home
-          </Button>
+          </a>
         </div>
       </div>
     </div>
