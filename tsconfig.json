@@ -4,7 +4,14 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
+
+    /* Strict mode — non-negotiable */
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -13,13 +20,22 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+
     "plugins": [
-      {
-        "name": "next"
-      }
+      { "name": "next" }
     ],
+
+    /* Path aliases */
     "paths": {
-      "@/*": ["./*"]
+      "@/*":             ["./*"],
+      "@/components/*":  ["./components/*"],
+      "@/modules/*":     ["./modules/*"],
+      "@/services/*":    ["./services/*"],
+      "@/hooks/*":       ["./hooks/*"],
+      "@/store/*":       ["./store/*"],
+      "@/utils/*":       ["./utils/*"],
+      "@/types/*":       ["./types/*"],
+      "@/styles/*":      ["./styles/*"]
     }
   },
   "include": [

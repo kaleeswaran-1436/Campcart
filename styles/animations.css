@@ -1,0 +1,90 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slideInBottom {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Animation utilities ─────────────────────────── */
+.animate-fade-in          { animation: fadeIn       var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-fade-out         { animation: fadeOut      var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-fade-in-up       { animation: fadeInUp     var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-fade-in-down     { animation: fadeInDown   var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-scale-in         { animation: scaleIn      var(--cc-duration-base) var(--cc-ease) both; }
+.animate-slide-in-right   { animation: slideInRight var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-slide-in-left    { animation: slideInLeft  var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-slide-in-bottom  { animation: slideInBottom var(--cc-duration-slow) var(--cc-ease) both; }
+.animate-pulse-soft       { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-spin-slow        { animation: spin-slow  2s linear infinite; }
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: 50ms;  }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* ── Skeleton shimmer ────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--cc-border-subtle) 25%,
+    var(--cc-bg-muted)      50%,
+    var(--cc-border-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--cc-radius-md);
+}
+
+/* ── Transition presets ──────────────────────────── */
+.transition-base { transition: all var(--cc-duration-base) var(--cc-ease); }
+.transition-fast { transition: all var(--cc-duration-fast) var(--cc-ease); }
+.transition-slow { transition: all var(--cc-duration-slow) var(--cc-ease); }
