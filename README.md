@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎬 CampCart - A Cinematic Multi-Tenant Marketplace
 
 A production-ready, high-end frontend for a college campus marketplace where students buy and sell items securely. Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion, and Zustand.
@@ -166,3 +167,7 @@ CMD ["npm", "start"]
 ---
 
 **Built with ❤️ for college campuses everywhere**
+=======
+# Campcart
+A secure campus marketplace for students to buy and sell items within their university, featuring automated student ID verification.
+>>>>>>> 51b88c21437efaccdb6786d39c33be9b4aaa8f7a
